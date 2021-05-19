@@ -1,0 +1,64 @@
+########## BUILDER ##########
+
+# pull official base image
+FROM python:3.8.3-alpine as builder
+
+# set working directory
+WORKDIR /usr/src/dummyproject
+
+# set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# install psycopg2 dependencies
+RUN apk update && apk add postgresql-dev gcc python3-dev musl-dev
+
+# copy django project files
+COPY ./dummyproject .
+
+# install dependencies
+#COPY ./dummyproject/requirements.txt .
+RUN pip install --upgrade pip
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/dummyproject/wheels -r requirements.txt
+
+
+
+########## FINAL ##########
+
+# pull official base image
+FROM python:3.8.3-alpine
+
+# create user directory in /home (user name = app name)
+RUN mkdir -p /home/dummyproject
+
+# create the user
+RUN addgroup -S dummyproject && adduser -S dummyproject -G dummyproject
+
+# create the appropriate directories
+ENV HOME=/home/dummyproject
+ENV APP_HOME=/home/dummyproject/web
+RUN mkdir $APP_HOME
+RUN mkdir $APP_HOME/static
+WORKDIR $APP_HOME
+
+# install dependencies
+RUN apk update && apk add libpq
+COPY --from=builder /usr/src/dummyproject/wheels /wheels
+COPY --from=builder /usr/src/dummyproject/requirements.txt .
+#RUN pip install --upgrade pip
+RUN pip install --no-cache /wheels/*
+
+# copy entrypoint script
+COPY docker/entrypoint.webapp.sh $APP_HOME
+
+# copy django project files
+COPY ./dummyproject $APP_HOME
+
+# chown all the files to the new user
+RUN chown -R dummyproject:dummyproject $APP_HOME
+
+# change to the new user
+USER dummyproject
+
+# run entrypoint script
+ENTRYPOINT ["/home/dummyproject/web/entrypoint.webapp.sh"]
