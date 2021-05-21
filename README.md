@@ -2,7 +2,7 @@
 
 You can use this template to deploy your **Django** based web site (**Django** + **PostgreSQL** + **Gunicorn** + **Nginx** configuration) on Linux servers by containerizing with **Docker**.
 
-Created and tested on AWS EC2 `t2.micro` class instance in the following environment: **Ubuntu 20.04**, **Docker 20.10.6**, **Docker-Compose 1.29.2**
+Created and tested in the following environment: **Ubuntu 20.04**, **Docker 20.10.6**, **Docker-Compose 1.29.2**
 
 ### Usage
 
